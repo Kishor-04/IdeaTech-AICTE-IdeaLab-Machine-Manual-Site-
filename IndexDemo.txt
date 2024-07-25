@@ -1,0 +1,164 @@
+//Student side backend
+
+import express from "express";
+import bodyParser from "body-parser";
+import mysql from "mysql";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const app = express();
+const port = 3000;
+
+//mysql connection
+const conn = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "kishor",
+    database: "userdata"
+})
+
+conn.connect((err) => {
+    if (err) console.log("Error connecting: " + err.stack);
+    else console.log("Connected successfully!");
+});
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use('/public', express.static(__dirname + "/public"));
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/stud_login.html");
+});
+
+app.get("/signup.html", (req, res) => {
+    res.sendFile(__dirname + "/signup.html");
+});
+
+app.get("/stud_login.html", (req, res) => {
+    res.sendFile(__dirname + "/stud_login.html");
+});
+
+app.get("/teacherlogin.html", (req, res) => {
+    res.sendFile(__dirname + "/teacherlogin.html");
+});
+
+//Student's login page
+app.post("/login", (req, res) => {
+    let email = req.body.email;
+    let password = req.body.password;
+
+    let query = "SELECT * FROM USERS WHERE email = ? and password = ?";
+    conn.query(query, [email, password], (err, results) => {
+        if (err) {
+            res.status(500).send("<h1>Error retrieving data.</h1>");
+            return;
+        }
+        if (results.length > 0) {
+            res.redirect('/main');
+        }
+        else {
+            res.send("<h1>Invalid username or password.</h1>");
+        }
+    });
+});
+
+//Student's signup page
+app.post("/signup", (req, res) => {
+    const first = req.body.firstName;
+    const last = req.body.lastName;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    console.log(first + " " + last);
+
+    const query = "INSERT INTO USERS (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
+    conn.query(query, [first, last, email, password], (err, results) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send("<h1>Error storing data into database.</h1>");
+            return;
+        }
+        else {
+            res.redirect('/stud_login.html');
+        }
+    });
+});
+
+app.get("/main", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
+})
+
+app.listen(port, () => {
+    console.log(`Server's now running on port ${port}`);
+})
+
+
+
+//Teacher side backend
+app.get("/stud_login.html", (req, res) => {
+    res.sendFile(__dirname + "/stud_login.html");
+});
+
+app.get("/signupTeacher.html", (req, res) => {
+    res.sendFile(__dirname + "/signupTeacher.html");
+});
+
+// Teacher's login page 
+app.post("/loginTeacher", (req, res) => {
+    let teacher_id = req.body.teacher_id;
+    let emailTeacher = req.body.emailTeacher;
+    let passwordTeacher = req.body.passwordTeacher;
+
+    console.log(__dirname);
+
+    let query1 = "SELECT * FROM teacher WHERE teacher_id = ? AND email_id = ? AND password = ?";
+    conn.query(query1, [teacher_id, emailTeacher, passwordTeacher], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            res.status(500).send("<h1>Error retrieving data.</h1>");
+            return;
+        }
+        if (results.length > 0) {
+            res.redirect('/mainTeacher');
+        }
+        else {
+            res.send("<h1>Invalid username or password.</h1>");
+        }
+    });
+});
+
+// Teacher's signup page
+app.post("/signupTeacher", (req, res) => {
+    const first = req.body.firstName;
+    const last = req.body.lastName;
+    const teacher_id = req.body.teacher_id;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    console.log(first + " " + last);
+
+    const query1 = "INSERT INTO USERS (firstname, lastname,teacher_id, email, password) VALUES (?, ?, ?, ?, ?)";
+    conn.query(query1, [first, last, teacher_id,email, password], (err, results) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send("<h1>Error storing data into database.</h1>");
+            return;
+        }
+        else {
+            res.redirect('/teacherlogin.html');
+        }
+    });
+});
+
+app.get("/mainTeacher", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
+})
+
+app.listen(port, () => {
+    console.log(`Server's now running on port ${port}`);
+})
+
+
+
+
